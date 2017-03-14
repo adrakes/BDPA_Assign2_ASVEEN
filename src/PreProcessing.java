@@ -132,7 +132,7 @@ public class PreProcessing extends Configured implements Tool {
 
          String line = new String();
     	 HashSet<String> rdw = new HashSet<String>();
-    	 SortedMap <Integer, String> sorted = new TreeMap<Integer, String>(Collections.reverseOrder());
+    	 SortedMap <Integer, String> sorted = new TreeMap<Integer, String>();
     	 
     	 for (Text verdi : values) {
     		 if (!rdw.contains(verdi.toString())) {
