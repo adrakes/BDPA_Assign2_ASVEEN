@@ -99,7 +99,7 @@ public class PreProcessing extends Configured implements Tool {
     	  read.close();
     	 
 
-    	  SN.set(SN.get()+1);
+    	 
     	  for (String token: value.toString().replaceAll("[^0-9A-Za-z]"," ").toLowerCase().split("\\s+")){
     		  if (!SW.contains(token)){
     			  word.set(token);
@@ -116,6 +116,7 @@ public class PreProcessing extends Configured implements Tool {
     			  }
     		  }
     	  }
+    	  SN.set(SN.get()+1);
       }
    
    }
