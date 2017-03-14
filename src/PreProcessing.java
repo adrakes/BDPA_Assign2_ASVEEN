@@ -94,13 +94,13 @@ public class PreProcessing extends Configured implements Tool {
 
     	  String ord = null;
     	  while ((ord = read.readLine()) != null){
-    		  SW.add(ord.toLowerCase());
+    		  SW.add(ord);
     	  }
     	  read.close();
     	 
 
     	 
-    	  for (String token: value.toString().replaceAll("[^0-9A-Za-z]"," ").toLowerCase().split("\\s+")){
+    	  for (String token: value.toString().replaceAll("[^0-9A-Za-z]"," ").split("\\s+")){
     		  if (!SW.contains(token)){
     			  word.set(token);
     			  if (token.isEmpty()) {continue;}
