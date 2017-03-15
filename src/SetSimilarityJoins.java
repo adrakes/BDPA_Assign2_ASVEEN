@@ -33,6 +33,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import com.google.common.hash.HashCode;
+
 
 
 public class SetSimilarityJoins extends Configured implements Tool {
@@ -46,9 +48,9 @@ public class SetSimilarityJoins extends Configured implements Tool {
    @Override
    public int run(String[] args) throws Exception {
       System.out.println(Arrays.toString(args));
-      Job job = new Job(getConf(), "PreProcessing");
+      Job job = new Job(getConf(), "SetSimiliarityJoins");
       job.setJarByClass(SetSimilarityJoins.class);
-      job.setOutputKeyClass(LongWritable.class);
+      job.setOutputKeyClass(Text.class);
       job.setOutputValueClass(Text.class);
       job.setNumReduceTasks(1);
 
@@ -73,98 +75,92 @@ public class SetSimilarityJoins extends Configured implements Tool {
       
       job.waitForCompletion(true);
       
+      System.out.println("Comparisons made : "+Reduce.antall);
+      System.out.println("Similar docs : "+Reduce.like);
+      
       return 0;
    }
    
-   public static class Map extends Mapper<LongWritable, Text, LongWritable, Text> {
-      private Text word = new Text();
-      private static LongWritable SN = new LongWritable(0);
-      private static TreeMap <String, Integer> RF = new TreeMap<String, Integer>();
+   public static class Map extends Mapper<LongWritable, Text, Text, Text> {
+ 
 
+      private static IntWritable counter = new IntWritable(0);
+      
+      protected void setup(Context context) throws IOException, InterruptedException { 
+      File inputFile = new File("/home/cloudera/workspace/Homework1b/PreProcessing.txt");
+	  BufferedReader read = new BufferedReader(new FileReader(inputFile));
+ 
+	  String ord = null;
+	  while ((ord = read.readLine()) != null){
+		  counter.set(counter.get()+1);
+		  
+	  }
+	  read.close();
+      }
       @Override
       public void map(LongWritable key, Text value, Context context)
               throws IOException, InterruptedException {
-    	  String line = new String();
-    	  File inputFile = new File("/home/cloudera/workspace/Homework1/output/StopWords_final_1.txt");
-    	  BufferedReader read = new BufferedReader(new FileReader(inputFile));
+    	  
+    	  Integer linjenummer = Integer.parseInt(value.toString().trim().split(";")[0]);
+    	  String setning = (value.toString().split(";")[1]);
     	  
     	  
-    	  Set<String> SW = new HashSet<String>();
 
-
-    	  String ord = null;
-    	  while ((ord = read.readLine()) != null){
-    		  SW.add(ord.toLowerCase());
-    	  }
-    	  read.close();
-    	 
-
-    	  SN.set(SN.get()+1);
-    	  for (String token: value.toString().replaceAll("[^0-9A-Za-z]"," ").toLowerCase().split("\\s+")){
-    		  if (!SW.contains(token)){
-    			  word.set(token);
-    			  if (token.isEmpty()) {continue;}
+    	  for (Integer i=0;i<counter.get();i++) {
+    		  if  (i != linjenummer){
+    			  	Integer minId = Math.min(i, linjenummer);
+  	 				Integer maxId = Math.max(i, linjenummer);
+  	 				String combo = Integer.toString(minId)+","+Integer.toString(maxId);
+  	 				context.write(new Text(combo), new Text(setning) );
+    		  	}
     		  
-    		  
-    			  context.write(SN, word); 
-        	 
-    			  if (RF.containsKey(token)) {
-    				  RF.put(token, RF.get(token)+1);
-    			  	}
-    			  else {
-    				  RF.put(token, 0);
-    			  }
-    		  }
     	  }
       }
-   
    }
+      
+   
+   
 
-   public static class Reduce extends Reducer<LongWritable, Text, LongWritable, Text> {
-		  HashMap <String, Integer> counter = new HashMap<String, Integer>();
+   public static class Reduce extends Reducer<Text, Text, Text, Text> {
+	   private static Integer like = 0;
+	   private static Integer antall = 0;
 	      
-	      protected void setup(Context context) throws IOException, InterruptedException { 
-	          counter.put("lines", 0);
-	       }
+
       @Override
-      public void reduce(LongWritable key, Iterable<Text> values, Context context)
+      public void reduce(Text key, Iterable<Text> values, Context context)
               throws IOException, InterruptedException {
-
-         String line = new String();
-    	 HashSet<String> rdw = new HashSet<String>();
-    	 SortedMap <Integer, String> sorted = new TreeMap<Integer, String>(Collections.reverseOrder());
+    	  HashSet<String> unik = new HashSet<String>();
+    	  
+    	  float total = 0;
+    	  float lik = 0;
+    	  float likhet = 0;
+    	  for (Text verdi : values) {
+    		  for (String enkeltOrd : verdi.toString().split(",")){
+	    			 if(unik.contains(enkeltOrd)){
+	    				 lik++;
+	    			 }
+	    			 else {
+	    				 unik.add(enkeltOrd);
+    		  }
+    		  
+    	  }
+    	  }
+    	  total = unik.size();
+    	  likhet = lik/total;
+    	  
+    	  if (likhet > 0.8){
+    		  context.write(key, new Text(Float.toString(likhet)));  
+    		  like++;
+    	  }
+    	  
+    	  
+ 
     	 
-    	 for (Text verdi : values) {
-    		 if (!rdw.contains(verdi.toString())) {
-    			 rdw.add(verdi.toString());
-    		 }
-    	 }
-    	 
-    	 for (String verdi : rdw) {
-    		 sorted.put(Map.RF.get(verdi),verdi);
-    	 }
 
-         for (String word : sorted.values()) {
-        	 line += word+",";
-         }
-         		line = line.substring(0, line.length()-1);
-         	
-         		context.write(key, new Text(line));
-         		counter.put("lines",counter.get("lines")+1);
+         antall++;	
+         		
+
          		}
       
-      protected void cleanup(Context context) throws IOException, InterruptedException {
-	       try{
-	          Path pt=new Path("output/preprocessing/Counter.txt");
-	          FileSystem fs = FileSystem.get(new Configuration());
-	          BufferedWriter br=new BufferedWriter(new OutputStreamWriter(fs.create(pt,true)));
-	          String line1="Number of lines: " + counter.get("lines") + "\n";
-	          br.write(line1);
-	          br.close();
-	    }catch(Exception e){
-	            System.out.println("Error");
-         	}
-        
-      }
    }
 }
