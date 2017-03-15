@@ -47,6 +47,7 @@ public class PreProcessing extends Configured implements Tool {
    public int run(String[] args) throws Exception {
       System.out.println(Arrays.toString(args));
       Job job = new Job(getConf(), "PreProcessing");
+      job.getConfiguration().set("mapreduce.output.textoutputformat.separator", ",");
       job.setJarByClass(PreProcessing.class);
       job.setOutputKeyClass(LongWritable.class);
       job.setOutputValueClass(Text.class);
@@ -54,20 +55,22 @@ public class PreProcessing extends Configured implements Tool {
 
       job.setMapperClass(Map.class);
       job.setReducerClass(Reduce.class);
+      
 
       job.setInputFormatClass(TextInputFormat.class);
       job.setOutputFormatClass(TextOutputFormat.class);
-      
-      FileSystem fs = FileSystem.newInstance(getConf());
-
+      FileInputFormat.addInputPath(job, new Path("pg100.txt")); 
+      Path outputPath = new Path("output/PreProcessing");
+      FileOutputFormat.setOutputPath(job, outputPath);
+      FileSystem fs = FileSystem.get(getConf());
       if (fs.exists(new Path(args[1]))) {
 		fs.delete(new Path(args[1]), true);
 	}
       
-      FileInputFormat.addInputPath(job, new Path(args[0]));
-      FileOutputFormat.setOutputPath(job, new Path(args[1]));
+      //FileInputFormat.addInputPath(job, new Path(args[0]));
+      //FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-      job.getConfiguration().set("mapreduce.output.textoutputformat.seperator", "->");
+      
       
 
       
