@@ -47,7 +47,7 @@ public class PreProcessing extends Configured implements Tool {
    public int run(String[] args) throws Exception {
       System.out.println(Arrays.toString(args));
       Job job = new Job(getConf(), "PreProcessing");
-      job.getConfiguration().set("mapreduce.output.textoutputformat.separator", ",");
+      job.getConfiguration().set("mapreduce.output.textoutputformat.separator", ";");
       job.setJarByClass(PreProcessing.class);
       job.setOutputKeyClass(LongWritable.class);
       job.setOutputValueClass(Text.class);
@@ -63,8 +63,8 @@ public class PreProcessing extends Configured implements Tool {
       Path outputPath = new Path("output/PreProcessing");
       FileOutputFormat.setOutputPath(job, outputPath);
       FileSystem fs = FileSystem.get(getConf());
-      if (fs.exists(new Path(args[1]))) {
-		fs.delete(new Path(args[1]), true);
+      if (fs.exists(outputPath)){
+	      fs.delete(outputPath, true);
 	}
       
       //FileInputFormat.addInputPath(job, new Path(args[0]));
