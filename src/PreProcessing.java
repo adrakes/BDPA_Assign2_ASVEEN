@@ -101,12 +101,12 @@ public class PreProcessing extends Configured implements Tool {
     	  }
     	  read.close();
     	 
-
-    	 
+    	  String input = value.toString();
+    	  if (!input.isEmpty()) {
     	  for (String token: value.toString().replaceAll("[^0-9A-Za-z]"," ").split("\\s+")){
     		  if (!SW.contains(token)){
     			  word.set(token);
-    			  if (token.isEmpty()) {continue;}
+    			  
     		  
     		  
     			  context.write(SN, word); 
@@ -119,9 +119,10 @@ public class PreProcessing extends Configured implements Tool {
     			  }
     		  }
     	  }
-    	  SN.set(SN.get()+1);
+    	  SN.set(SN.get()+1);  
       }
    
+   }
    }
 
    public static class Reduce extends Reducer<LongWritable, Text, LongWritable, Text> {
