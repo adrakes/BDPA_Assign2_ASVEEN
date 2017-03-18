@@ -103,11 +103,11 @@ public class PreProcessing extends Configured implements Tool {
     	 
     	  String input = value.toString();
     	  if (!input.isEmpty()) {
-    	  for (String token: value.toString().replaceAll("[^0-9A-Za-z]"," ").split("\\s+")){
-    		  if (!SW.contains(token)){
-    			  word.set(token);
+    	  for (String token: value.toString().replaceAll("[^0-9A-Za-z ]","").split("\\s+")){
+    		  if ((!SW.contains(token)) && !token.isEmpty()){
+    			  word.set(token.trim());
     			  
-    		  
+    		 
     		  
     			  context.write(SN, word); 
         	 
@@ -148,7 +148,9 @@ public class PreProcessing extends Configured implements Tool {
     	 for (String verdi : rdw) {
     		 sorted.put(Map.RF.get(verdi),verdi);
     	 }
-
+    
+    	 
+    
          for (String word : sorted.values()) {
         	 line += word+",";
          }
